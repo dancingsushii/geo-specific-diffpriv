@@ -12,5 +12,5 @@ Furthermore, this plugin will support five aggregation methods. After certain re
 
 One of the basic requirements for testing and evaluation of the plugin is a proper dataset. Geospatial databases contain information describing objects linked to specific locations or surfaces. Geospatial data is usually a large set of data collected from many different sources such as weather data, census data, or social media data. This data becomes meaningful more often in an economic or social context, where it can be used to draw conclusions.
 
-# Ealuation
+# Evaluation
 In order to prove that our plugin performs as expected, we will use Google Cloud Platform for benchmarking performance. Apart from the key characteristic of reusability the benchmarking process should also prove that geospatial querying will output nearly the same result whether data is randomized or not.
