@@ -6,7 +6,7 @@ Our goal is to implement generic and reusable plugin for PostGIS geospatial data
 Furthermore, this plugin will support five aggregation methods. After certain research we chose following methods: 
 1) Geometric center
 2) Bounding rectangle
-3) Clustering of points ([DBSCAN]([http://localhost/](https://en.wikipedia.org/wiki/DBSCAN)))
+3) Clustering of points ([DBSCAN]([https://en.wikipedia.org/wiki/DBSCAN]))
 4) Hexagons
 5) Aggregation per administrative units
 
