@@ -1,4 +1,4 @@
-# Technical scopes
+# Technical scopes of thid project
 Our goal is to implement generic and reusable plugin for PostGIS geospatial database or for GeoPandas with a purpose to allow developers community easily ensure differential privacy concept over geospatial data. Ensuring differential privacy in plugin will be applicable on geospatial data. So that the output from the geospatial database and after plugin executing will provide randomised geospatial data.
 
 ![](https://github.com/dancingsushii/geo-specific-diffpriv/blob/main/architecture.jpg)
