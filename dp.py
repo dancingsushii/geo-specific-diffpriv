@@ -73,8 +73,6 @@ def get_geometry(table):
             rows[index][2]
             
         ])
-
-    
     
     return result
 
@@ -97,9 +95,10 @@ def initial_points(table):
     return points_unique,states
 
 
-def create_grid(points_unique):
-    n = get_data_points_count()
-    cell_size = 0.7616 #get_grid_size(n)
+def create_grid(points_unique,n):
+    #n = get_data_points_count()
+    #print(n)
+    cell_size = get_grid_size(n) #0.7616 
     xmin, ymin, xmax, ymax= points_unique.total_bounds
     # how many cells across and down
     #n_cells=30
