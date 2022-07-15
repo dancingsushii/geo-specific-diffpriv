@@ -1,3 +1,4 @@
+import maskpass  # to hide/mask the password
 import psycopg2
 import math
 import geopandas as gpd
@@ -12,15 +13,16 @@ import pandas as pd
 from shapely import wkt
 import folium
 
-
 def db_conn():
-    
+    # Masking the password, the user will be asked for the password
+    pwd = maskpass.askpass(mask="") 
+    # To connect to database. Update IP, port, database and user to your values.
     conn = psycopg2.connect(
         host="34.159.36.105",
         port ="5432",
         database="geodp",
         user="postgres", 
-        password='postgres')
+        password=pwd)
     cur = conn.cursor()
 
     return cur, conn
