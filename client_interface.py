@@ -37,7 +37,7 @@ def client_request(query):
     dp.create_new_table()
     points_df = dp.generate_df_for_new_table(new_points)
     dp.generate_csv_for_new_table(points_df)
-    #dp.insert_csv_into_new_table()
+    dp.insert_csv_into_new_table()
 
     #dp.plot_points(initial_points,grid_cells,states_list)
     #dp.plot_points(new_points,grid_cells,states_list)
