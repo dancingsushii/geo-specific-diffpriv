@@ -12,20 +12,23 @@ import csv
 import pandas as pd
 from shapely import wkt
 import folium
+from gcloud import storage
+
 
 def db_conn():
     # Masking the password, the user will be asked for the password
-    pwd = maskpass.askpass(mask="") 
+    #pwd = maskpass.askpass(mask="") 
     # To connect to database. Update IP, port, database and user to your values.
     conn = psycopg2.connect(
         host="34.159.36.105",
         port ="5432",
         database="geodp",
         user="postgres", 
-        password=pwd)
+        password='postgres')#pwd)
     cur = conn.cursor()
 
     return cur, conn
+
 
 
 '''def disconnect_db():
@@ -134,6 +137,7 @@ def plot_points(points,cells,states_list):
     points.plot(ax=base, marker='o', color='blue', markersize=5)
     cells.plot(ax=base, facecolor="none", edgecolor='grey')
     base.axis("off")
+    plt.show()
 
 
     
@@ -196,26 +200,29 @@ def get_all_new_points(polygons):
             p = new_points(pol,polygons[pol].astype('int'))
             all_new_points.append(p)
 
-    df_new_points = generate_df_for_new_table(all_new_points).drop(columns=["before", "between", "after"])
-    new_points_gpd = gpd.GeoDataFrame(df_new_points, geometry=gpd.points_from_xy(df_new_points['x'], df_new_points['y']))
+    #df_new_points = generate_df_for_new_table(all_new_points).drop(columns=["before", "between", "after"])
+    #new_points_gpd = gpd.GeoDataFrame(df_new_points, geometry=gpd.points_from_xy(df_new_points['x'], df_new_points['y']))
 
-            
-    return new_points_gpd
+    
+    return all_new_points#,new_points_gpd
 
 
 def create_new_table():
     cursor, conn = db_conn()
-    cursor.execute("CREATE TABLE test  ( new_id int4 primary key, new_geom geometry(POINT,4326) );")
+    cursor.execute("CREATE TABLE IF NOT EXISTS  test  ( new_id int4 primary key, new_geom geometry(POINT,4326) );")
     conn.commit()
     cursor.close()
 
 def generate_df_for_new_table(points):
     point_dict = {'before':[],'x': [],'between':[], 'y': [], 'after':[]}
     for pol in points:
+        
         for point in pol:
+            
             point_dict['before'].append('SRID=4326;POINT(')
             point_dict['x'].append(point[0])
             point_dict['between'].append(' ')
+            #print(point)
             point_dict['y'].append(point[1])
             point_dict['after'].append(')')
             
@@ -239,9 +246,9 @@ def insert_csv_into_new_table():
 
 
 
-def bounding_box1():
+def bounding_box():
     cursor, conn = db_conn()
-    cursor.execute("select ST_AsText(ST_Envelope(ST_Collect(geom))) from  (select * from smalldata where  date = '2020-12-10') as foo;")
+    cursor.execute("select ST_AsText(ST_Envelope(ST_Collect(geom))) as bounding_box from test;")
     rows = cursor.fetchall()
     result = []
     for index in range(len(rows)):
@@ -271,45 +278,18 @@ def bounding_box1():
     m = folium.Map([coord_lat, coord_lon], zoom_start=4, tiles='cartodbpositron')
     folium.GeoJson(polygon).add_to(m)
     folium.LatLngPopup().add_to(m)
-    return m
+    polygon_val = polygon._get_value(0,'geometry')
+    return m, polygon_val
 
 
-
-def hexagon():
+def geom_center():
     cursor, conn = db_conn()
-    cursor.execute("SELECT ST_AsText(ST_SetSRID(ST_Hexagon(1.0, 0, 0, st_makepoint(st_x(geom), st_y(geom))), 4326)) from smalldata;")
-    rows = cursor.fetchall()
-    result = []
-    for index in range(len(rows)):
-        result.append([
-            rows[index][0]
-        ])
-    cursor.close()
-    polygon_postgis = result[0]
-    x_y = []
-    x = []
-    y = []
-    polygon_postgis = polygon_postgis[0].replace('POLYGON((','').replace("))","")
-    #print(polygon_original)
-    points_list = polygon_postgis.split(",")
-    #print(points_list)
-    for i in points_list:
-        x.append(i.split(" ")[0])
-        y.append(i.split(" ")[1])
-    lon_point_list = list(map(float, x))
-    lat_point_list = list(map(float, y))
-    polygon_geom = Polygon(zip(lon_point_list, lat_point_list))
-    crs = {'init': 'epsg:4326'}
-    polygon = gpd.GeoDataFrame(index=[0], crs=crs, geometry=[polygon_geom]) 
-    coord_lon = int(lon_point_list[-1])
-    coord_lat = int(lat_point_list[-1])
-    
-    m = folium.Map([coord_lat, coord_lon], zoom_start=4, tiles='cartodbpositron')
-    folium.GeoJson(polygon).add_to(m)
-    folium.LatLngPopup().add_to(m)
-    return result, m
-    
-    #return result
-    #print(result)
+    cursor.execute("SELECT avg(ST_X(geom)) as lon, avg(ST_Y(geom)) as lat FROM test;")
+    result = cursor.fetchone() 
+    m = folium.Map([result[1], result[0]], zoom_start=4, tiles='cartodbpositron')
+    folium.CircleMarker(location=[result[1], result[0]],
+                        radius=2,
+                        weight=5).add_to(m)
+    return m, result
      
 

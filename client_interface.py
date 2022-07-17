@@ -26,7 +26,7 @@ def client_request(query):
     
 
     #Apply differencial privacy
-
+    
     initial_points,states_list = dp.initial_points(table)
     grid_cells = dp.create_grid(initial_points,len(initial_points))
     cell_counts = dp.get_cell_counts(initial_points,grid_cells)
@@ -34,16 +34,26 @@ def client_request(query):
     polygons = dp.get_polygons(cell_counts)
     new_points = dp.get_all_new_points(polygons)
 
-    dp.plot_points(initial_points,grid_cells,states_list)
-    dp.plot_points(new_points,grid_cells,states_list)
+    dp.create_new_table()
+    points_df = dp.generate_df_for_new_table(new_points)
+    dp.generate_csv_for_new_table(points_df)
+    #dp.insert_csv_into_new_table()
 
+    #dp.plot_points(initial_points,grid_cells,states_list)
+    #dp.plot_points(new_points,grid_cells,states_list)
+    
+   
 
 
 
     
     #Check what
-    if "ST_Envelope" in query:
-        pass#print()
+    if "st_envelope" in query.lower():
+        bounding_box, polygon = dp.bounding_box()
+        print(polygon)
+    elif "st_centroid" in query.lower():
+        point, center=dp.geom_center()
+        print(center)
 
     
 
@@ -52,4 +62,7 @@ def client_request(query):
     #select ST_AsText(ST_Envelope(ST_Collect(geom))) from  (select * from mediumdata where  date >= '2020-05-01');
 
 
-client_request("select ST_AsText(ST_Envelope(ST_Collect(geom))) from mediumdata where state = 'California' or state = 'Texas';")
+
+if __name__ == '__main__':
+    client_request("select ST_AsText(ST_Envelope(ST_Collect(geom))) from mediumdata where state = 'California' or state = 'Texas';")
+    client_request("select ST_AsText(ST_Centroid(ST_Union(geom))) from mediumdata where state = 'California' or state = 'Texas';")
