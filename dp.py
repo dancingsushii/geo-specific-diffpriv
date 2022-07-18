@@ -20,7 +20,7 @@ def db_conn():
     #pwd = maskpass.askpass(mask="") 
     # To connect to database. Update IP, port, database and user to your values.
     conn = psycopg2.connect(
-        host="34.159.36.105",
+        host="localhost",
         port ="5432",
         database="geodp",
         user="postgres", 
