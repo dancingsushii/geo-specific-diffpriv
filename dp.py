@@ -240,7 +240,7 @@ def generate_csv_for_new_table(df):
 def insert_csv_into_new_table():
     cursor, conn = db_conn()
     cursor.execute("delete from test;")
-    cursor.execute("COPY test FROM '/home/ingastrelnikova28/points.csv' DELIMITERS ',' CSV HEADER;")
+    cursor.execute("COPY test FROM '/home/ingastrelnikova28/geo-specific-diffpriv/points.csv' DELIMITERS ',' CSV HEADER;")
     conn.commit()
     cursor.close()
 
