@@ -13,6 +13,10 @@ import pandas as pd
 from shapely import wkt
 import folium
 from gcloud import storage
+import getpass
+import warnings
+
+
 
 
 def db_conn():
@@ -240,7 +244,9 @@ def generate_csv_for_new_table(df):
 def insert_csv_into_new_table():
     cursor, conn = db_conn()
     cursor.execute("delete from test;")
-    cursor.execute("COPY test FROM '/home/ingastrelnikova28/geo-specific-diffpriv/points.csv' DELIMITERS ',' CSV HEADER;")
+    user = getpass.getuser()
+    cursor.execute("COPY test FROM '/home/"+user+"/geo-specific-diffpriv/points.csv' DELIMITERS ',' CSV HEADER;")
+    print(user)
     conn.commit()
     cursor.close()
 

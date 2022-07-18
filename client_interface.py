@@ -1,7 +1,7 @@
 
 import dp
 import psycopg2
-
+import warnings
 
 
 def client_request(query):
@@ -64,5 +64,6 @@ def client_request(query):
 
 
 if __name__ == '__main__':
+    warnings.filterwarnings('ignore')
     client_request("select ST_AsText(ST_Envelope(ST_Collect(geom))) from mediumdata where state = 'California' or state = 'Texas';")
     client_request("select ST_AsText(ST_Centroid(ST_Union(geom))) from mediumdata where state = 'California' or state = 'Texas';")
