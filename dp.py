@@ -73,7 +73,7 @@ def get_geometry(table):
     return result
 
 '''This function creates a geoPandas dataframe with the initial points, removing the exact dublicates'''
-def initial_points(table):
+def get_initial_points(table):
     l = get_geometry(table)
     x = []
     y = []
@@ -173,16 +173,13 @@ def new_points(polygon,n):
 '''This function generates points for each cell by calling the function new_points for each cell'''
 def get_all_new_points(polygons):
     all_new_points = []
-    #count = 0
     for pol in polygons:
         if polygons[pol].astype('int')!=0:
         
             p = new_points(pol,polygons[pol].astype('int'))
             all_new_points.append(p)
-
-    #df_new_points = generate_df_for_new_table(all_new_points).drop(columns=["before", "between", "after"])
-    #new_points_gpd = gpd.GeoDataFrame(df_new_points, geometry=gpd.points_from_xy(df_new_points['x'], df_new_points['y']))
-    return all_new_points#,new_points_gpd
+    
+    return all_new_points
 
 '''This function creates a new table in the database for the new points if it does not exist yet'''
 def create_new_table():

@@ -29,7 +29,7 @@ def client_request(query,eps):
 
     #Apply differencial privacy
     
-    initial_points,states_list = dp.initial_points(table)
+    initial_points,states_list = dp.get_initial_points(table)
     grid_cells = dp.create_grid(initial_points,len(initial_points),eps)
     cell_counts = dp.get_cell_counts(initial_points,grid_cells,eps)
 
@@ -60,5 +60,5 @@ def client_request(query,eps):
 
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
-    client_request(" ST_AsText(ST_Envelope(ST_Collect(geom))) from mediumdata where state = 'California' or state = 'Texas';",0.1)
-    client_request(" ST_AsText(ST_Centroid(ST_Union(geom))) from mediumdata where state = 'California' or state = 'Texas';",0.1)
+    client_request("select ST_AsText(ST_Envelope(ST_Collect(geom))) from mediumdata where state = 'California' or state = 'Texas';",0.1)
+    client_request("select ST_AsText(ST_Centroid(ST_Union(geom))) from mediumdata where state = 'California' or state = 'Texas';",0.1)
