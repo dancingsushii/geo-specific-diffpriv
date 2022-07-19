@@ -39,7 +39,9 @@ SQL query has to be a correct SQL query with select and from parts and a semicol
 
 At the moment the chosen budget is 0.1 as per the paper "Node Location Privacy Protection Based on Differentially Private Grids in Industrial Wireless Sensor Networks" by Jun Wang, Rongbo Zhu, Shubo Liu and Zhaohui Cai (2018).
 
+# How to manually setup PostGIS
 
+For instructions on how to manually setup PostGIS in your host/VM, please check [README.postgis.md](https://github.com/dancingsushii/geo-specific-diffpriv/blob/main/README.postgis.md)
 
 
 # Technical scopes of this project
