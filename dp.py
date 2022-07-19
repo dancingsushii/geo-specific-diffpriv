@@ -18,7 +18,7 @@ import warnings
 import subprocess
 
 
-#pip install -r requirements.txt
+
 
 '''This function connects to the Postgres database on the cloud'''
 def db_conn():
@@ -45,11 +45,11 @@ def db_conn():
 
 
 '''The function calculates the grid size m depending on the number of data points (from the paper "Differentially Private Grids for Geospatial Data")'''
-def get_grid_size(n):
+def get_grid_size(n,eps):
     c = 10
-    epsilon = 0.1
+    #epsilon = 0.1
     #print(n)
-    m = math.sqrt((n*epsilon)/c)
+    m = math.sqrt((n*eps)/c)
     #print(m)
     return m
 
@@ -90,8 +90,8 @@ def initial_points(table):
     return points_unique,states
 
 '''This function creates the grid based on the formula from the paper'''
-def create_grid(points_unique,n):
-    cell_size = get_grid_size(n) #0.7616 
+def create_grid(points_unique,n,eps):
+    cell_size = get_grid_size(n,eps) #0.7616 
     xmin, ymin, xmax, ymax= points_unique.total_bounds
     crs = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs"
     # create the cells 

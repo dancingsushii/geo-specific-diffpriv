@@ -3,10 +3,13 @@ import psycopg2
 import warnings
 
 
-def client_request(query):
+def client_request(query,eps):
+
+    if ("select" not in query) or ("from" not in query) or (";" not in query):
+        print("Please use a correct SQL query!")
+        return
 
     table = query.partition("from")[2]
-    #print(table)
     
     #In case the user wants to filter the data for date or counte/state, create a new table with filtered data
     if "where" in query:
@@ -22,12 +25,12 @@ def client_request(query):
         conn.commit()
         cursor.close()
 
-    eps = 0.1
+    #eps = 0.1
 
     #Apply differencial privacy
     
     initial_points,states_list = dp.initial_points(table)
-    grid_cells = dp.create_grid(initial_points,len(initial_points))
+    grid_cells = dp.create_grid(initial_points,len(initial_points),eps)
     cell_counts = dp.get_cell_counts(initial_points,grid_cells,eps)
 
     polygons = dp.get_polygons(cell_counts)
@@ -42,7 +45,7 @@ def client_request(query):
     #dp.plot_points(new_points,grid_cells,states_list)
     
     
-    #Check what
+    #Check what function
     if "st_envelope" in query.lower():
         bounding_box, polygon = dp.bounding_box()
         print(polygon)
@@ -52,10 +55,10 @@ def client_request(query):
 
     
 
-    #select ST_AsText(ST_Envelope(ST_Collect(geom))) from  (select * from mediumdata where  date >= '2020-05-01');
+    
 
 
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
-    client_request("select ST_AsText(ST_Envelope(ST_Collect(geom))) from mediumdata where state = 'California' or state = 'Texas';")
-    client_request("select ST_AsText(ST_Centroid(ST_Union(geom))) from mediumdata where state = 'California' or state = 'Texas';")
+    client_request(" ST_AsText(ST_Envelope(ST_Collect(geom))) from mediumdata where state = 'California' or state = 'Texas';",0.1)
+    client_request(" ST_AsText(ST_Centroid(ST_Union(geom))) from mediumdata where state = 'California' or state = 'Texas';",0.1)
