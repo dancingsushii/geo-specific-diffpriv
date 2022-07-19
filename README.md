@@ -43,6 +43,9 @@ At the moment the chosen budget is 0.1 as per the paper "Node Location Privacy P
 
 For instructions on how to manually setup PostGIS in your host/VM, please check [README.postgis.md](https://github.com/dancingsushii/geo-specific-diffpriv/blob/main/README.postgis.md)
 
+# Jupyter notebook
+
+Alternatively, Jupyter Notebook geo_dp_proxy.ipynb can be used to run the code.
 
 # Technical scopes of this project
 Our goal is to implement generic and reusable plugin for PostGIS geospatial database or for GeoPandas with a purpose to allow developers community easily ensure differential privacy concept over geospatial data. Ensuring differential privacy in plugin will be applicable on geospatial data. So that the output from the geospatial database and after plugin executing will provide randomised geospatial data.
