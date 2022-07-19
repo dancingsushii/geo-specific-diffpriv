@@ -28,7 +28,7 @@ client_request(SQLquery, privacy_budget)
 ```
 The parameters can be changed for testing purposes. Some rules are below.
 
-In case there are any problems with the bash script, please run:
+In case there are any permissions problems with the bash script, please run:
 ```
 chmod 777 upload_csv.sh
 ```
