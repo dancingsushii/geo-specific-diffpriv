@@ -1,0 +1,9 @@
+maskpass 
+psycopg2-binary
+geopandas 
+matplotlib
+numpy
+pandas
+folium
+gcloud
+rtree

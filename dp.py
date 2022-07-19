@@ -15,8 +15,10 @@ import folium
 from gcloud import storage
 import getpass
 import warnings
+import subprocess
 
 
+#pip install -r requirements.txt
 
 
 def db_conn():
@@ -24,7 +26,7 @@ def db_conn():
     #pwd = maskpass.askpass(mask="") 
     # To connect to database. Update IP, port, database and user to your values.
     conn = psycopg2.connect(
-        host="localhost",
+        host="34.159.36.105",#"localhost",
         port ="5432",
         database="geodp",
         user="postgres", 
@@ -42,21 +44,6 @@ def db_conn():
         g.db = None'''
 
 
-'''The function calculates the number of data points in the database'''
-def get_data_points_count():
-    cursor, conn = db_conn()
-    cursor.execute("SELECT COUNT(*) from mediumdata;")
-    rows = cursor.fetchall()
-    cursor.close()
-
-    result = []
-    for index in range(len(rows)):
-        result.append(
-            rows[index][0])
-
-    
-    return result[0]
-
 '''The function calculates the grid size m depending on the number of data points (from the paper "Differentially Private Grids for Geospatial Data")'''
 def get_grid_size(n):
     c = 10
@@ -67,7 +54,7 @@ def get_grid_size(n):
     return m
 
 
-'''This function '''
+'''This function returns the points that are in the table initially, without any privacy'''
 def get_geometry(table):
     cursor, conn = db_conn()
     cursor.execute("SELECT st_x(geom), st_y(geom), state FROM "+table+";")
@@ -85,8 +72,8 @@ def get_geometry(table):
     
     return result
 
+'''This function creates a geoPandas dataframe with the initial points, removing the exact dublicates'''
 def initial_points(table):
-
     l = get_geometry(table)
     x = []
     y = []
@@ -96,46 +83,36 @@ def initial_points(table):
         y.append(i[1])
         states.append(i[2])
     states = list(set(states))
-
     points = gpd.GeoDataFrame({"x":x,"y":y})
     points['geometry'] = points.apply(lambda p: Point(p.x, p.y), axis=1)
     points_unique = points.drop_duplicates()
 
     return points_unique,states
 
-
+'''This function creates the grid based on the formula from the paper'''
 def create_grid(points_unique,n):
-    #n = get_data_points_count()
-    #print(n)
     cell_size = get_grid_size(n) #0.7616 
     xmin, ymin, xmax, ymax= points_unique.total_bounds
-    # how many cells across and down
-    #n_cells=30
-    #cell_size = 0.7616#(xmax-xmin)/n_cells
-    # projection of the grid
     crs = "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs"
-    # create the cells in a loop
-    grid_cells = []
-    for x0 in np.arange(xmin, xmax+cell_size, cell_size ):
+    # create the cells 
+    grid = []
+    for x0 in np.arange(xmin, xmax+cell_size, cell_size):
         for y0 in np.arange(ymin, ymax+cell_size, cell_size):
-            # bounds
             x1 = x0-cell_size
             y1 = y0+cell_size
-            grid_cells.append( shapely.geometry.box(x0, y0, x1, y1)  )
-    cell = gpd.GeoDataFrame(grid_cells, columns=['geometry'], 
+            grid.append(shapely.geometry.box(x0, y0, x1, y1))
+    cell = gpd.GeoDataFrame(grid, columns=['geometry'], 
                                     crs=crs)
 
     return cell
 
-
+'''This function is for plotting the points on top of the grid cells'''
 def plot_points(points,cells,states_list):
     
-    states = gpd.read_file('data/tl_2021_us_state.shp')
+    states = gpd.read_file('states/tl_2021_us_state.shp')
     states = states.to_crs("EPSG:4326")
     states.boundary.plot(color = 'grey')
-
     #print(states[states['NAME'].isin(states_list)])
-    
     base = states[states['NAME'].isin(states_list)].plot(color='white', edgecolor='black',figsize=(12, 8))
     plt.autoscale(False)
     points.plot(ax=base, marker='o', color='blue', markersize=5)
@@ -144,16 +121,18 @@ def plot_points(points,cells,states_list):
     plt.show()
 
 
-    
-
-def get_cell_counts(points_unique,cell):
+'''This function counts the points in each cell and then applies the laplacian noise'''
+def get_cell_counts(points_unique,cell, eps):
     cell = cell.reset_index().rename(columns = {'index':'id'})
-    pointInPolys = gpd.sjoin(points_unique, cell, how='inner', op = 'intersects')
-    pointInPolys = pointInPolys.drop_duplicates(subset=['x', 'y'], keep='first')
-    count_points = pointInPolys.groupby(['id']).size().reset_index(name='count')
+    #join the cells and points and remove duplicates if there are
+    pointInPolygons = gpd.sjoin(points_unique, cell, how='inner', op = 'intersects')
+    pointInPolygons = pointInPolygons.drop_duplicates(subset=['x', 'y'], keep='first')
+    #count the initial points
+    count_points = pointInPolygons.groupby(['id']).size().reset_index(name='count')
     cell_counts = pd.merge(cell,count_points, on = 'id')
     
-    eps = 0.1
+    #apply the noise and round the counts
+    #eps = 0.1
     dp_count = []
     for row in cell_counts.iterrows():
         dp_count.append(row[1]['count']+np.random.laplace(0, 1 / eps, 1)[0])
@@ -164,19 +143,17 @@ def get_cell_counts(points_unique,cell):
     return cell_counts
 
 
-
+'''This function gets the cellls as the polygons to the dictionary with the differentially private counts'''
 def get_polygons(cell_counts):
     polygons = {}
     for i in range(0,cell_counts.count()[0]):
         polygons[wkt.dumps(cell_counts['geometry'][i])] = cell_counts['count_dp_rounded'][i]
     return polygons
 
-
+'''This function generates new points in a cell according to the differentially private count of the cell and returns a list of points'''
 def new_points(polygon,n):
     cursor, conn = db_conn()
-    #polygon = "POLYGON ((-124.6588619852515620 41.4117418382433868, -124.6588619852515620 42.1733418382433882, -123.8972619852515606 42.1733418382433882, -123.8972619852515606 41.4117418382433868, -124.6588619852515620 41.4117418382433868))"
     cursor.execute("select st_asText(ST_GeneratePoints(ST_GeomFromText('"+polygon+"'),"+str(n)+"));")
-    #cursor.execute("select st_asText(ST_GeneratePoints(ST_GeomFromText(POLYGON ((-123.8972619852515606 39.1269418382433827, -123.8972619852515606 39.8885418382433841, -123.1356619852515593 39.8885418382433841, -123.1356619852515593 39.1269418382433827, -123.8972619852515606 39.1269418382433827))),"+str(n)+"));")
     rows = cursor.fetchall()
     cursor.close()
 
@@ -191,10 +168,9 @@ def new_points(polygon,n):
     x_y = []
     for i in point_list:
         x_y.append(i.split(" "))
-        
-    
     return x_y
 
+'''This function generates points for each cell by calling the function new_points for each cell'''
 def get_all_new_points(polygons):
     all_new_points = []
     #count = 0
@@ -226,7 +202,6 @@ def generate_df_for_new_table(points):
             point_dict['before'].append('SRID=4326;POINT(')
             point_dict['x'].append(point[0])
             point_dict['between'].append(' ')
-            #print(point)
             point_dict['y'].append(point[1])
             point_dict['after'].append(')')
             
@@ -240,12 +215,14 @@ def generate_csv_for_new_table(df):
     df = df.drop(columns=["before","x", "between","y", "after"])
     
     df.to_csv('points.csv',index = False)
+    #put the file to the vm
+    rc = subprocess.call("./upload_csv.sh", shell=True)
 
 def insert_csv_into_new_table():
     cursor, conn = db_conn()
     cursor.execute("delete from test;")
     user = getpass.getuser()
-    cursor.execute("COPY test FROM '/home/"+user+"/geo-specific-diffpriv/points.csv' DELIMITERS ',' CSV HEADER;")
+    cursor.execute("COPY test FROM '/home/ingastrelnikova28_gmail_com/points.csv' DELIMITERS ',' CSV HEADER;")
     print(user)
     conn.commit()
     cursor.close()
