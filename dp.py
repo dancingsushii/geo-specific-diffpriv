@@ -20,7 +20,7 @@ import subprocess
 
 #pip install -r requirements.txt
 
-
+'''This function connects to the Postgres database on the cloud'''
 def db_conn():
     # Masking the password, the user will be asked for the password
     #pwd = maskpass.askpass(mask="") 
@@ -182,17 +182,16 @@ def get_all_new_points(polygons):
 
     #df_new_points = generate_df_for_new_table(all_new_points).drop(columns=["before", "between", "after"])
     #new_points_gpd = gpd.GeoDataFrame(df_new_points, geometry=gpd.points_from_xy(df_new_points['x'], df_new_points['y']))
-
-    
     return all_new_points#,new_points_gpd
 
-
+'''This function creates a new table in the database for the new points if it does not exist yet'''
 def create_new_table():
     cursor, conn = db_conn()
     cursor.execute("CREATE TABLE IF NOT EXISTS  test  ( new_id int4 primary key, new_geom geometry(POINT,4326) );")
     conn.commit()
     cursor.close()
 
+'''This function generatesa dataframe for the new table with created points'''
 def generate_df_for_new_table(points):
     point_dict = {'before':[],'x': [],'between':[], 'y': [], 'after':[]}
     for pol in points:
@@ -208,7 +207,7 @@ def generate_df_for_new_table(points):
     points_df = pd.DataFrame.from_dict(point_dict)
     return points_df  
 
-
+'''This function generates a csv file with the new points to import into the database'''
 def generate_csv_for_new_table(df):
     df = df.reset_index().rename(columns = {'index':'id'})
     df["geom"] = df[["before","x", "between","y", "after"]].apply("".join, axis=1)
@@ -218,17 +217,18 @@ def generate_csv_for_new_table(df):
     #put the file to the vm
     rc = subprocess.call("./upload_csv.sh", shell=True)
 
+
+'''This function inserts the new points into the table'''
 def insert_csv_into_new_table():
     cursor, conn = db_conn()
     cursor.execute("delete from test;")
     user = getpass.getuser()
     cursor.execute("COPY test FROM '/home/ingastrelnikova28_gmail_com/points.csv' DELIMITERS ',' CSV HEADER;")
-    print(user)
     conn.commit()
     cursor.close()
 
 
-
+'''This function calculates a bounding box from the table with newly generated private points and returns a map and a polygon'''
 def bounding_box():
     cursor, conn = db_conn()
     cursor.execute("select ST_AsText(ST_Envelope(ST_Collect(geom))) as bounding_box from test;")
@@ -244,9 +244,7 @@ def bounding_box():
     x = []
     y = []
     polygon_postgis = polygon_postgis[0].replace('POLYGON((','').replace("))","")
-    #print(polygon_original)
     points_list = polygon_postgis.split(",")
-    #print(points_list)
     for i in points_list:
         x.append(i.split(" ")[0])
         y.append(i.split(" ")[1])
@@ -264,7 +262,7 @@ def bounding_box():
     polygon_val = polygon._get_value(0,'geometry')
     return m, polygon_val
 
-
+'''This function calculates a geometric center from the table with newly generated private points and returns a map and a point'''
 def geom_center():
     cursor, conn = db_conn()
     cursor.execute("SELECT avg(ST_X(geom)) as lon, avg(ST_Y(geom)) as lat FROM test;")
