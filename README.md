@@ -28,6 +28,11 @@ client_request(SQLquery, privacy_budget)
 ```
 The parameters can be changed for testing purposes. Some rules are below.
 
+In case there are any problems with the bash script, please run:
+```
+chmod 777 upload_csv.sh
+```
+
 1. SQL query
 
 SQL query has to be a correct SQL query with select and from parts and a semicolon at the end (Postgres rule). Moreover, depending on the query, different aggregation functions are used:
