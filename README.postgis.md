@@ -91,3 +91,6 @@ COPY smalldata FROM '$HOME/big-dataset-covid19-us.csv' DELIMITERS ',' CSV HEADER
 COPY mediumdata FROM '$HOME/big-dataset-covid19-us.csv' DELIMITERS ',' CSV HEADER;
 COPY bigdata FROM '$HOME/big-dataset-covid19-us.csv' DELIMITERS ',' CSV HEADER;
 ```
+
+## Update your PostGIS server details
+1. Change the values of your PostGIS server IP address and creds under the function: "db_conn()" in the script [dp.py](https://github.com/dancingsushii/geo-specific-diffpriv/blob/main/dp.py)
